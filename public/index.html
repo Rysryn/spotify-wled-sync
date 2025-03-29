@@ -1,0 +1,721 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify WLED Controller</title>
+  <style>
+    :root {
+      --primary-color: #1DB954;
+      --dark-bg: #121212;
+      --light-bg: #282828;
+      --text-color: #FFFFFF;
+      --vibrant-color: #1DB954;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--dark-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      width: 100%;
+    }
+    
+    header {
+      padding: 20px 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .logo span {
+      color: var(--primary-color);
+    }
+    
+    .login-section {
+      text-align: center;
+      padding: 60px 0;
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .login-section h1 {
+      font-size: 42px;
+      margin-bottom: 20px;
+    }
+    
+    .login-section p {
+      font-size: 18px;
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .btn {
+      display: inline-block;
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      background-color: #1ed760;
+      transform: translateY(-2px);
+    }
+    
+    .dashboard {
+      display: none;
+      padding: 30px 0;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .user-name {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .track-info {
+      background-color: var(--light-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .album-art {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+    }
+    
+    .track-details {
+      padding: 20px;
+    }
+    
+    .track-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .track-artist {
+      font-size: 18px;
+      color: #b3b3b3;
+      margin-bottom: 15px;
+    }
+    
+    .album-name {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .wled-control {
+      background-color: var(--light-bg);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .control-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #ff5555;
+    }
+    
+    .status-dot.connected {
+      background-color: #55ff55;
+    }
+    
+    .color-palette {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .color-swatch {
+      height: 60px;
+      border-radius: 5px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 12px;
+      padding: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .color-swatch:hover {
+      transform: scale(1.05);
+    }
+    
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    
+    .toggle-label {
+      font-size: 16px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .not-playing {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    
+    .not-playing h3 {
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    
+    .waveform {
+      width: 100%;
+      height: 60px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    
+    .wave-bar {
+      width: 5px;
+      height: 30px;
+      background-color: var(--vibrant-color);
+      border-radius: 2px;
+      animation: wave 1s infinite ease-in-out;
+    }
+    
+    @keyframes wave {
+      0%, 100% { height: 10px; }
+      50% { height: 40px; }
+    }
+    
+    .wave-bar:nth-child(1) { animation-delay: 0.0s; }
+    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.5s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.6s; }
+    .wave-bar:nth-child(8) { animation-delay: 0.7s; }
+    
+    .wled-settings {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .ip-settings {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .ip-input {
+      flex-grow: 1;
+      background-color: var(--dark-bg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 12px;
+      border-radius: 4px;
+      color: white;
+    }
+    
+    .waveform.paused .wave-bar {
+      animation-play-state: paused;
+      height: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3ZM15.82 15.53C15.65 15.8 15.33 15.89 15.06 15.72C13.17 14.56 10.77 14.2 7.91 14.95C7.61 15.03 7.31 14.83 7.24 14.53C7.16 14.23 7.36 13.93 7.66 13.86C10.82 13.03 13.51 13.45 15.63 14.76C15.9 14.93 15.99 15.26 15.82 15.53ZM16.83 13.06C16.62 13.39 16.22 13.5 15.89 13.29C13.71 11.97 10.52 11.5 7.63 12.4C7.26 12.5 6.87 12.3 6.76 11.93C6.66 11.56 6.86 11.17 7.23 11.07C10.5 10.05 14.03 10.58 16.6 12.15C16.93 12.36 17.04 12.76 16.83 13.06ZM16.91 10.52C14.33 8.99 9.95 8.83 7.3 9.62C6.87 9.74 6.41 9.5 6.3 9.07C6.18 8.64 6.42 8.18 6.85 8.06C9.93 7.16 14.78 7.36 17.76 9.15C18.21 9.4 18.36 9.96 18.1 10.41C17.85 10.86 17.29 11.02 16.91 10.52Z" fill="#1DB954"/>
+        </svg>
+        <span>WLED</span> Sync
+      </div>
+      <div id="loginBtn" class="user-actions">
+        <a href="/login" class="btn">Log in with Spotify</a>
+      </div>
+      <div id="userDisplay" class="user-actions" style="display: none;">
+        <div class="user-info">
+          <div class="user-avatar">
+            <img id="userAvatar" src="" alt="User avatar">
+          </div>
+          <div class="user-name" id="userName">Username</div>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <main>
+    <section id="loginSection" class="login-section container">
+      <h1>Sync your WLED with Spotify</h1>
+      <p>Control your WLED lights based on what you're listening to. Extract colors from album art and make your lights dance to the music.</p>
+      <a href="/login" class="btn">Connect with Spotify</a>
+    </section>
+    
+    <section id="dashboard" class="dashboard container">
+      <div class="main-content">
+        <div class="track-info" id="trackInfoCard">
+          <div id="notPlaying" class="not-playing">
+            <h3>No track currently playing</h3>
+            <p>WLED is in default mode</p>
+          </div>
+          <div id="nowPlaying" style="display: none;">
+            <img id="albumArt" class="album-art" src="" alt="Album art">
+            <div class="track-details">
+              <div class="track-title" id="trackTitle">Track Title</div>
+              <div class="track-artist" id="trackArtist">Artist Name</div>
+              <div class="album-name" id="albumName">Album Name</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="wled-control">
+          <div class="control-header">
+            <div class="control-title">WLED Controls</div>
+            <div class="status-indicator">
+              <div id="wledStatus" class="status-dot"></div>
+              <span id="wledStatusText">Disconnected</span>
+            </div>
+          </div>
+          
+          <div id="colorPalette" class="color-palette">
+            <!-- Color swatches will be added dynamically -->
+          </div>
+          
+          <div class="waveform" id="waveform">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+          
+          <div class="toggle-wrapper">
+            <span class="toggle-label">Audio Reactive Mode</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="audioReactiveToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          
+          <div class="wled-settings">
+            <div class="control-title">WLED Device</div>
+            <div class="ip-settings">
+              <input type="text" id="wledIpInput" class="ip-input" placeholder="WLED IP Address (e.g. 192.168.1.100)">
+              <button id="saveWledIp" class="btn">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM elements
+      const loginSection = document.getElementById('loginSection');
+      const dashboard = document.getElementById('dashboard');
+      const loginBtn = document.getElementById('loginBtn');
+      const userDisplay = document.getElementById('userDisplay');
+      const userAvatar = document.getElementById('userAvatar');
+      const userName = document.getElementById('userName');
+      const notPlaying = document.getElementById('notPlaying');
+      const nowPlaying = document.getElementById('nowPlaying');
+      const albumArt = document.getElementById('albumArt');
+      const trackTitle = document.getElementById('trackTitle');
+      const trackArtist = document.getElementById('trackArtist');
+      const albumName = document.getElementById('albumName');
+      const colorPalette = document.getElementById('colorPalette');
+      const wledStatus = document.getElementById('wledStatus');
+      const wledStatusText = document.getElementById('wledStatusText');
+      const audioReactiveToggle = document.getElementById('audioReactiveToggle');
+      const waveform = document.getElementById('waveform');
+      const wledIpInput = document.getElementById('wledIpInput');
+      const saveWledIp = document.getElementById('saveWledIp');
+      
+      // Store current track data
+      let currentTrackData = null;
+      
+      // WebSocket connection
+      let socket;
+      
+      // Initialize WebSocket connection
+      function initWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        
+        socket = new WebSocket(wsUrl);
+        
+        socket.onopen = () => {
+          console.log('WebSocket connected');
+          updateWledStatus(true);
+        };
+        
+        socket.onclose = () => {
+          console.log('WebSocket disconnected');
+          updateWledStatus(false);
+          // Try to reconnect after a delay
+          setTimeout(initWebSocket, 3000);
+        };
+        
+        socket.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          
+          if (data.isPlaying !== undefined) {
+            updatePlayerUI(data);
+          }
+        };
+        
+        socket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          updateWledStatus(false);
+        };
+      }
+      
+      // Check if user is authenticated
+      async function checkAuth() {
+        try {
+          const response = await fetch('/api/user');
+          
+          if (response.ok) {
+            const userData = await response.json();
+            showDashboard(userData);
+            
+            // Initialize WebSocket after authentication
+            initWebSocket();
+            
+            // Start polling for track updates
+            pollCurrentTrack();
+          } else {
+            showLoginPage();
+          }
+        } catch (error) {
+          console.error('Auth check error:', error);
+          showLoginPage();
+        }
+      }
+      
+      // Display the dashboard with user data
+      function showDashboard(userData) {
+        loginSection.style.display = 'none';
+        dashboard.style.display = 'block';
+        loginBtn.style.display = 'none';
+        userDisplay.style.display = 'flex';
+        
+        // Update user info
+        if (userData.images && userData.images.length > 0) {
+          userAvatar.src = userData.images[0].url;
+        } else {
+          userAvatar.src = 'https://via.placeholder.com/50';
+        }
+        
+        userName.textContent = userData.display_name;
+        
+        // Load saved WLED IP if any
+        const savedIp = localStorage.getItem('wledIp');
+        if (savedIp) {
+          wledIpInput.value = savedIp;
+        }
+      }
+      
+      // Show login page
+      function showLoginPage() {
+        loginSection.style.display = 'flex';
+        dashboard.style.display = 'none';
+        loginBtn.style.display = 'block';
+        userDisplay.style.display = 'none';
+      }
+      
+      // Poll for current track data
+      function pollCurrentTrack() {
+        fetchCurrentTrack();
+        
+        // Poll every 3 seconds (should match server polling)
+        setInterval(fetchCurrentTrack, 3000);
+      }
+      
+      // Fetch current track from API
+      async function fetchCurrentTrack() {
+        try {
+          const response = await fetch('/api/current-track');
+          
+          if (response.ok) {
+            const data = await response.json();
+            updatePlayerUI(data);
+          } else if (response.status === 401) {
+            // Not authenticated
+            showLoginPage();
+          }
+        } catch (error) {
+          console.error('Error fetching track:', error);
+        }
+      }
+      
+      // Update the UI with track data
+      function updatePlayerUI(data) {
+        if (data.isPlaying && data.trackInfo) {
+          // Show now playing UI
+          notPlaying.style.display = 'none';
+          nowPlaying.style.display = 'block';
+          
+          // Update track information
+          albumArt.src = data.trackInfo.albumArt;
+          trackTitle.textContent = data.trackInfo.name;
+          trackArtist.textContent = data.trackInfo.artist;
+          albumName.textContent = data.trackInfo.album;
+          
+          // Update color palette
+          updateColorPalette(data.trackInfo.colors);
+          
+          // Update waveform animation
+          waveform.classList.remove('paused');
+          document.documentElement.style.setProperty('--vibrant-color', data.trackInfo.colors.vibrant);
+          
+          // Store current track data for audio reactive toggle
+          currentTrackData = data.trackInfo;
+        } else {
+          // Show not playing UI
+          notPlaying.style.display = 'block';
+          nowPlaying.style.display = 'none';
+          
+          // Pause waveform animation
+          waveform.classList.add('paused');
+        }
+        
+        // If we're entering default mode, disable audio reactive toggle
+        if (data.defaultModeActive) {
+          audioReactiveToggle.checked = false;
+        }
+      }
+      
+      // Update color palette with extracted colors
+      function updateColorPalette(colors) {
+        if (!colors) return;
+        
+        colorPalette.innerHTML = '';
+        
+        // Create color swatches for each color
+        const colorKeys = Object.keys(colors);
+        colorKeys.forEach(key => {
+          const swatch = document.createElement('div');
+          swatch.className = 'color-swatch';
+          swatch.style.backgroundColor = colors[key];
+          swatch.textContent = key.replace(/([A-Z])/g, ' $1').trim();
+          colorPalette.appendChild(swatch);
+        });
+      }
+      
+      // Update WLED connection status
+      function updateWledStatus(connected) {
+        if (connected) {
+          wledStatus.classList.add('connected');
+          wledStatusText.textContent = 'Connected';
+        } else {
+          wledStatus.classList.remove('connected');
+          wledStatusText.textContent = 'Disconnected';
+        }
+      }
+      
+      // Toggle audio reactive mode
+      audioReactiveToggle.addEventListener('change', async () => {
+        if (!currentTrackData) return;
+        
+        const isEnabled = audioReactiveToggle.checked;
+        
+        try {
+          await fetch('/api/wled/toggle-audio-reactive', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              enabled: isEnabled,
+              colors: currentTrackData.colors
+            })
+          });
+        } catch (error) {
+          console.error('Error toggling audio reactive mode:', error);
+          // Revert toggle if request failed
+          audioReactiveToggle.checked = !isEnabled;
+        }
+      });
+      
+      // Save WLED IP address
+      saveWledIp.addEventListener('click', () => {
+        const ipAddress = wledIpInput.value.trim();
+        
+        if (ipAddress) {
+          localStorage.setItem('wledIp', ipAddress);
+          
+          // Send IP to server
+          fetch('/api/wled/update-ip', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ip: ipAddress })
+          })
+          .then(response => {
+            if (response.ok) {
+              alert('WLED IP address saved successfully');
+            } else {
+              alert('Failed to save WLED IP address');
+            }
+          })
+          .catch(error => {
+            console.error('Error saving WLED IP:', error);
+            alert('Error saving WLED IP address');
+          });
+        }
+      });
+      
+      // Check authentication on page load
+      checkAuth();
+    });
+  </script>
+</body>
+</html>
